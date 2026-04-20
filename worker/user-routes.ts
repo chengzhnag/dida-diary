@@ -8,17 +8,6 @@ import type { Env } from "./core-utils";
 const getJwtSecret = (env: Env) => new TextEncoder().encode(env.JWT_SECRET);
 
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  // Global Middleware to check D1 Database Binding
-  app.use('/api/diaries/*', async (c, next) => {
-    if (!c.env.DB) {
-      return c.json({
-        success: false,
-        error: '数据库未绑定',
-        detail: '请在 Cloudflare Dashboard 绑定 D1 数据库，并命名为 "DB"。'
-      }, 500);
-    }
-    await next();
-  });
 
   app.post('/api/auth/login', async (c) => {
     try {
