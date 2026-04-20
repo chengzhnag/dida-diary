@@ -12,10 +12,10 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "ADMIN_PASS": "admin",
+    "DIARY_PASS": "1234",
+    "JWT_SECRET": "secret"
   }
-  // "vars": {
-  //   "ADMIN_PASS": "admin",
-  //   "DIARY_PASS": "1234",
-  //   "JWT_SECRET": "secret"
-  // }
 }

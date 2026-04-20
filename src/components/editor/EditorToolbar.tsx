@@ -3,6 +3,7 @@ import { Smile, Type, Bold, Italic, List, CheckSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import zh from 'emoji-picker-react/dist/data/emojis-zh';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 interface EditorToolbarProps {
@@ -44,7 +45,7 @@ export function EditorToolbar({
   ];
   return (
     <div className="border-t border-orange-100 bg-white/80 backdrop-blur-md pb-safe">
-      <div className="flex flex-wrap gap-2 p-2 px-4 border-b border-orange-50">
+      <div className="flex flex-wrap gap-2 p-4 px-4 border-b border-orange-50">
         {tags.map(tag => (
           <Badge key={tag} variant="secondary" className="bg-orange-50 text-orange-600 gap-1 pr-1 group">
             #{tag}
@@ -59,7 +60,7 @@ export function EditorToolbar({
             placeholder="+ 标签"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
-            className="w-full text-xs bg-transparent border-none focus:ring-0 placeholder:text-orange-300"
+            className="w-full bg-transparent border-none focus:ring-0 placeholder:text-orange-300"
           />
         </form>
       </div>
@@ -71,21 +72,27 @@ export function EditorToolbar({
                 <Smile size={22} />
               </Button>
             </DrawerTrigger>
-            <DrawerContent className="h-[50vh]" aria-describedby="emoji-drawer-desc">
-              <DrawerHeader className="sr-only">
+            <DrawerContent className="h-[60vh]" aria-describedby="emoji-drawer-desc">
+              <DrawerHeader className="">
                 <DrawerTitle>选择表情</DrawerTitle>
                 <DrawerDescription id="emoji-drawer-desc">
                   从表情库中选择一个表情插入到您的日记中。
                 </DrawerDescription>
               </DrawerHeader>
-              <div className="p-0 h-full overflow-hidden">
+              <div className="p-0 overflow-hidden">
                 <EmojiPicker
                   onEmojiClick={(data) => handleEmojiSelect(data.emoji)}
                   width="100%"
                   height="100%"
                   skinTonesDisabled
+                  autoFocusSearch={false}
+                  lazyLoadEmojis
+                  searchDisabled
+                  previewConfig={{ showPreview: false }}
                   searchPlaceHolder="搜索表情..."
                   theme={Theme.LIGHT}
+                  style={{background: '#FFF7ED'}}
+                  emojiData={zh}
                 />
               </div>
             </DrawerContent>

@@ -65,7 +65,7 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
   {
-    path: "/editor/:id",
+    path: "/editor/:id?",
     element: (
       <AuthGuard>
         <AppInitializer>

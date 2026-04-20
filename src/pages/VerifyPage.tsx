@@ -13,11 +13,13 @@ export default function VerifyPage() {
   const navigate = useNavigate();
   const unlockList = useAppStore(s => s.unlockList);
   const isListUnlocked = useAppStore(s => s.isListUnlocked);
+
   useEffect(() => {
     if (isListUnlocked) {
       navigate('/diaries', { replace: true });
     }
   }, [isListUnlocked, navigate]);
+
   const handleVerify = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!password.trim()) return;
@@ -38,6 +40,7 @@ export default function VerifyPage() {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen bg-[#FFF7ED] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-50" />
@@ -85,10 +88,10 @@ export default function VerifyPage() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="h-12 rounded-2xl text-zinc-400 hover:text-zinc-600 font-medium flex items-center gap-2"
             >
-              <ArrowLeft size={16} /> 返回记录
+              <ArrowLeft size={16} /> 回到记录
             </Button>
           </div>
         </form>

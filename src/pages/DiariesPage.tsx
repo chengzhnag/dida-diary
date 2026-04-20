@@ -219,7 +219,7 @@ export function DiariesPage() {
         )}
       </div>
       <Button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/editor')}
         className="fixed bottom-10 right-6 w-16 h-16 rounded-full bg-orange-500 hover:bg-orange-600 shadow-2xl shadow-orange-500/40 flex items-center justify-center p-0 group z-50 active:scale-90 transition-all border-4 border-white"
       >
         <Plus className="text-white w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />

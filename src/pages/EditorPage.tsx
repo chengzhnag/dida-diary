@@ -42,7 +42,6 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const [newCategory, setNewCategory] = useState('');
   const [isCategoryError, setIsCategoryError] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
   const initializedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -73,7 +72,6 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       setIsMarkdown(false);
       setIsPreview(false);
       initializedIdRef.current = 'new';
-      setTimeout(() => titleRef.current?.focus(), 150);
     }
   }, [id, diaries, navigate, isLoading]);
 
@@ -162,14 +160,14 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   return (
     <div className="flex flex-col h-[100dvh] bg-[#FFF7ED]">
       <header className="flex items-center justify-between px-4 py-3 bg-[#FFF7ED]/80 backdrop-blur-md border-b border-orange-100 z-10 shrink-0">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           {isFirst ? null : (
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full text-zinc-600 shrink-0 h-9 w-9">
               <ChevronLeft size={24} />
             </Button>
           )}
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full uppercase tracking-widest w-fit">
+            <span className="text-[16px] font-bold text-orange-500 bg-orange-50 py-0.5 rounded-full uppercase tracking-widest w-fit">
               {id ? '修正记忆' : '记录此刻'}
             </span>
           </div>
@@ -245,7 +243,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="text-[11px] font-bold text-zinc-700 bg-transparent border-none p-0 focus:ring-0 cursor-pointer w-[100px] appearance-none outline-none"
+              className="text-[12px] font-bold text-zinc-700 bg-transparent border-none p-0 focus:ring-0 cursor-pointer w-[100px] appearance-none outline-none"
             />
           </div>
           <motion.div
@@ -268,14 +266,14 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
                 value={newCategory}
                 onChange={e => setNewCategory(e.target.value)}
                 onKeyDown={addCategory}
-                className="flex-1 text-[10px] bg-transparent border-none p-0 focus:ring-0 placeholder:text-zinc-300 min-w-[60px] outline-none"
+                className="flex-1 text-[12px] bg-transparent border-none p-0 focus:ring-0 placeholder:text-zinc-300 min-w-[60px] outline-none"
               />
             </div>
           </motion.div>
         </div>
         <div className="shrink-0 px-1">
           <input
-            ref={titleRef}
+            autoFocus={false}
             type="text"
             placeholder="给这段记忆起个名字..."
             value={title}
