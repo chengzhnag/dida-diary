@@ -73,7 +73,7 @@ export function EditorToolbar({
               </Button>
             </DrawerTrigger>
             <DrawerContent className="h-[60vh]" aria-describedby="emoji-drawer-desc">
-              <DrawerHeader className="">
+              <DrawerHeader className="sr-only">
                 <DrawerTitle>选择表情</DrawerTitle>
                 <DrawerDescription id="emoji-drawer-desc">
                   从表情库中选择一个表情插入到您的日记中。

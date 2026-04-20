@@ -3,13 +3,14 @@ import { useAppStore } from '@/store/useAppStore';
 
 export const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAppStore(s => s.isAuthenticated);
+  const isListUnlocked = useAppStore(s => s.isListUnlocked);
   const fetchDiaries = useAppStore(s => s.fetchDiaries);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isListUnlocked) {
       fetchDiaries();
     }
-  }, [isAuthenticated, fetchDiaries]);
+  }, [isAuthenticated, isListUnlocked, fetchDiaries]);
 
   return <>{children}</>;
 };

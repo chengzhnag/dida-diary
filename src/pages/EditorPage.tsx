@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Check, Eye, EyeOff, LayoutGrid, Trash2, History, Plus } from 'lucide-react';
+import { ChevronLeft, Check, Eye, EyeOff, LayoutGrid, Trash2, History, Plus, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const deleteDiary = useAppStore(s => s.deleteDiary);
   const isListUnlocked = useAppStore(s => s.isListUnlocked);
   const isLoading = useAppStore(s => s.isLoading);
+  const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -43,6 +44,16 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const [isCategoryError, setIsCategoryError] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedIdRef = useRef<string | null>(null);
+
+  const clear = () => {
+    setTitle('');
+    setContent('');
+    setTags([]);
+    setCategories([]);
+    setDate(format(new Date(), 'yyyy-MM-dd'));
+    setIsMarkdown(false);
+    setIsPreview(false);
+  }
 
   useEffect(() => {
     if (id) {
@@ -64,22 +75,13 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
     } else {
       // Reset for new entry
       if (initializedIdRef.current === 'new') return;
-      setTitle('');
-      setContent('');
-      setTags([]);
-      setCategories([]);
-      setDate(format(new Date(), 'yyyy-MM-dd'));
-      setIsMarkdown(false);
-      setIsPreview(false);
+      clear();
       initializedIdRef.current = 'new';
     }
   }, [id, diaries, navigate, isLoading]);
 
   const handleSave = async () => {
-    if (!title.trim() && !content.trim()) {
-      handleGoToList();
-      return;
-    }
+    setLoading(true);
     // Auto-include pending category
     let finalCategories = [...categories];
     const trimmedNewCat = newCategory.trim();
@@ -87,7 +89,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       finalCategories.push(trimmedNewCat);
     }
     const data = {
-      title: title.trim() || '无题',
+      title: title.trim() || `${date}日记`,
       content,
       tags: tags.map(t => t.trim()).filter(Boolean),
       categories: finalCategories.map(c => c.trim()).filter(Boolean),
@@ -102,13 +104,20 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       if (id) {
         await updateDiary(id, data);
         toast.success('时光印记已更新');
+        setTimeout(() => navigate('/diaries', { replace: true }), 300);
       } else {
         await addDiary(data);
-        toast.success('心情已安全存入滴答日记');
+        toast.success('已安全存入滴答日记');
+        if (location.pathname === '/editor') {
+          setTimeout(() => navigate('/diaries', { replace: true }), 300);
+        } else {
+          clear();
+        }
       }
-      setTimeout(() => navigate('/diaries', { replace: true }), 300);
     } catch (e) {
       toast.error('时光同步失败');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,7 +190,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
                 initializedIdRef.current = null;
                 navigate('/');
               }}
-              className="rounded-full text-zinc-400 hover:text-orange-500 h-9 w-9"
+              className="rounded-full hover:text-orange-500 h-9 w-9"
               title="新建记录"
             >
               <Plus size={18} />
@@ -190,7 +199,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           <Button
             variant="ghost"
             onClick={handleGoToList}
-            className="rounded-full text-zinc-500 hover:text-orange-500 transition-colors gap-1.5 h-9 px-3"
+            className="rounded-full hover:text-orange-500 transition-colors gap-1.5 h-9 px-3"
           >
             <History size={18} />
             <span className="text-xs font-bold hidden xs:inline">时光</span>
@@ -198,7 +207,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           {id && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full text-zinc-300 hover:text-red-400 h-9 w-9">
+                <Button variant="ghost" size="icon" className="rounded-full hover:text-red-400 h-9 w-9">
                   <Trash2 size={18} />
                 </Button>
               </AlertDialogTrigger>
@@ -228,11 +237,23 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           )}
           <Button
             onClick={handleSave}
+            disabled={Boolean(!content.trim())}
             size="sm"
             className="rounded-full bg-orange-500 hover:bg-orange-600 text-white h-9 gap-1.5 shadow-lg shadow-orange-500/20 px-4 ml-1 active:scale-95 transition-all"
           >
-            <Check size={18} />
-            <span className="text-xs font-bold">存入</span>
+            {
+              loading ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  <span className="text-xs font-bold">存入</span>
+                </>
+              ) : (
+                <>
+                  <Check size={18} />
+                  <span className="text-xs font-bold">存入</span>
+                </>
+              )
+            }
           </Button>
         </div>
       </header>

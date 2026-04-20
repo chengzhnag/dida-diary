@@ -83,7 +83,7 @@ export default function LoginPage() {
               </div>
             )}
           </Button>
-          <p className="text-[10px] text-zinc-400 font-medium">默认管理密码: admin</p>
+          {/* <p className="text-[10px] text-zinc-400 font-medium">默认管理密码: admin</p> */}
         </form>
       </motion.div>
       <footer className="absolute bottom-10 flex flex-col items-center gap-1">

@@ -25,6 +25,7 @@ export function DiariesPage() {
   const [endDate, setEndDate] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
+
   useDebounce(
     () => {
       // Only fetch if unlocked to avoid 401 loops
@@ -35,12 +36,14 @@ export function DiariesPage() {
     500,
     [keyword, startDate, endDate, isListUnlocked]
   );
+
   useEffect(() => {
     // If not loading and not unlocked, force verification
     if (!isLoading && !isListUnlocked) {
       navigate('/verify', { replace: true });
     }
   }, [isListUnlocked, isLoading, navigate]);
+
   const safeFormatDate = (dateStr: string, formatStr: string) => {
     try {
       const date = parseISO(dateStr);
@@ -50,7 +53,9 @@ export function DiariesPage() {
       return '??';
     }
   };
+
   if (!isListUnlocked && !isLoading) return null;
+
   return (
     <div className="relative min-h-full bg-[#FFF7ED] flex flex-col">
       <header className="sticky top-0 z-40 bg-[#FFF7ED]/95 backdrop-blur-lg px-6 py-4 border-b border-orange-100 shrink-0">

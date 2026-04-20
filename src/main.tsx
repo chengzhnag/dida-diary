@@ -19,6 +19,7 @@ import LoginPage from '@/pages/LoginPage';
 import VerifyPage from '@/pages/VerifyPage';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppInitializer } from '@/components/AppInitializer';
+import { Toaster } from '@/components/ui/sonner';
 const queryClient = new QueryClient();
 // Defined routes for the core diary experience
 const router = createBrowserRouter([
@@ -31,9 +32,7 @@ const router = createBrowserRouter([
     path: "/verify",
     element: (
       <AuthGuard>
-        <AppInitializer>
-          <VerifyPage />
-        </AppInitializer>
+        <VerifyPage />
       </AuthGuard>
     ),
     errorElement: <RouteErrorBoundary />,
@@ -42,11 +41,9 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <AuthGuard>
-        <AppInitializer>
-          <MobileLayout>
-            <EditorPage isFirst />
-          </MobileLayout>
-        </AppInitializer>
+        <MobileLayout>
+          <EditorPage isFirst />
+        </MobileLayout>
       </AuthGuard>
     ),
     errorElement: <RouteErrorBoundary />,
@@ -83,11 +80,14 @@ const router = createBrowserRouter([
   }
 ]);
 createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <RouterProvider router={router} />
-      </ErrorBoundary>
-    </QueryClientProvider>
-  </React.StrictMode>,
+  <>
+    <Toaster />
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <RouterProvider router={router} />
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </React.StrictMode>
+  </>,
 );

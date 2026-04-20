@@ -47,3 +47,33 @@
     scrollbar-width: none;
   }
 }
+
+@layer utilities {
+  /* 隐藏Chrome, Safari和Opera的滚动条 */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* 隐藏IE, Edge和Firefox的滚动条 */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE和Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  /* 自定义滚动条样式 */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+  }
+}
+

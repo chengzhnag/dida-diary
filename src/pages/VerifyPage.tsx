@@ -63,7 +63,7 @@ export default function VerifyPage() {
           <motion.div animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}>
             <Input
               type="password"
-              placeholder="请输入 4 位访问密码"
+              placeholder="请输入访问密码"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-16 text-center text-2xl bg-white rounded-3xl border-orange-100 focus:ring-orange-500 shadow-sm font-mono tracking-widest"
@@ -88,7 +88,7 @@ export default function VerifyPage() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/', { replace: true })}
               className="h-12 rounded-2xl text-zinc-400 hover:text-zinc-600 font-medium flex items-center gap-2"
             >
               <ArrowLeft size={16} /> 回到记录

@@ -1,7 +1,8 @@
 import { ApiResponse } from "../../shared/types"
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init })
+  const fullPath = path.startsWith('https://') ? path : `https://d.952737.xyz${path}`
+  const res = await fetch(fullPath, { headers: { 'Content-Type': 'application/json' }, ...init })
   // 401 未授权，清除用户信息并跳转登录
   if (res.status === 401) {
     localStorage.removeItem('whisper_token');

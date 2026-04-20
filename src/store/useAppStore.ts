@@ -21,7 +21,7 @@ interface AppState {
   setSearchQuery: (query: string) => void;
 }
 
-const API_BASE = '/api';
+const API_BASE = 'https://d.952737.xyz/api';
 
 export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: !!localStorage.getItem('whisper_token'),
@@ -90,7 +90,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!token) return;
     set({ isLoading: true });
     try {
-      const url = new URL(`${window.location.origin}${API_BASE}/diaries`);
+      const url = new URL(`${API_BASE}/diaries`);
       const isFiltered = !!(params?.q?.trim() || params?.startDate || params?.endDate);
       if (params?.q) url.searchParams.append('q', params.q);
       if (params?.startDate) url.searchParams.append('startDate', params.startDate);
