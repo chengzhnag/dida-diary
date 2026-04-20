@@ -5,25 +5,25 @@ import { SignJWT, jwtVerify } from 'jose';
 import type { DiaryEntry } from "@shared/types";
 import type { Env } from "./core-utils";
 
-const getJwtSecret = (env: Env) => new TextEncoder().encode(env.JWT_SECRET || 'memos-whispers-fallback-secret-key');
+const getJwtSecret = (env: Env) => new TextEncoder().encode(env.JWT_SECRET);
 
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // Global Middleware to check D1 Database Binding
-  // app.use('/api/diaries/*', async (c, next) => {
-  //   if (!c.env.DB) {
-  //     return c.json({
-  //       success: false,
-  //       error: '数据库未绑定',
-  //       detail: '请在 Cloudflare Dashboard 绑定 D1 数据库，并命名为 "DB"。'
-  //     }, 500);
-  //   }
-  //   await next();
-  // });
+  app.use('/api/diaries/*', async (c, next) => {
+    if (!c.env.DB) {
+      return c.json({
+        success: false,
+        error: '数据库未绑定',
+        detail: '请在 Cloudflare Dashboard 绑定 D1 数据库，并命名为 "DB"。'
+      }, 500);
+    }
+    await next();
+  });
 
   app.post('/api/auth/login', async (c) => {
     try {
       const { password } = await c.req.json();
-      const adminPass = c.env.ADMIN_PASS || 'admin';
+      const adminPass = c.env.ADMIN_PASS;
       if (password === adminPass) {
         const token = await new SignJWT({ role: 'admin' })
           .setProtectedHeader({ alg: 'HS256' })
@@ -87,7 +87,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.post('/api/diaries/verify-list', async (c) => {
     try {
       const { password } = await c.req.json();
-      const envPass = c.env.DIARY_PASS || '1234';
+      const envPass = c.env.DIARY_PASS;
       if (password === envPass) {
         return ok(c, true);
       }
