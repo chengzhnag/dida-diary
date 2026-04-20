@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dida-diary",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-04-24",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "!/api/docs/*"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ADMIN_PASS": "admin",
+    "DIARY_PASS": "1234",
+    "JWT_SECRET": "secret"
+  }
+}
