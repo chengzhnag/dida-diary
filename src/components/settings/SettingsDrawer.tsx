@@ -26,22 +26,40 @@ interface SettingsDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
-  const diaries = useAppStore(s => s.diaries);
   const importDiaries = useAppStore(s => s.importDiaries);
+  const getAllExportDiaries = useAppStore(s => s.getAllExportDiaries);
   const logout = useAppStore(s => s.logout);
   const { isDark, toggleTheme } = useTheme();
-  const handleExport = () => {
-    const data = JSON.stringify(diaries, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dida-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('时光备份已导出至本地');
+
+  const handleExport = async () => {
+    try {
+      const diaries = await getAllExportDiaries();
+      if (!diaries || diaries.length === 0) {
+        toast.error('备份失败：无有效日记数据');
+        return;
+      }
+      const data = JSON.stringify(diaries, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      if (blob.size < 10) { // 根据实际数据量调整阈值
+        toast.error('备份失败：生成文件内容异常');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dida-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (navigator.permissions && !navigator.permissions.query) {
+        toast.warning('浏览器可能阻止自动下载，请手动确认');
+      } else {
+        toast.success('已触发下载操作，请检查下载目录');
+      }
+    } catch (error) {
+      toast.error('备份出错了：' + error.message);
+    }
   };
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,7 +121,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
               <Download size={12} className="text-blue-400" /> 数据实验室
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <button 
+              <button
                 onClick={handleExport}
                 className="flex flex-col items-center gap-3 p-5 bg-orange-50/50 dark:bg-orange-500/10 rounded-3xl active:scale-95 transition-all border border-orange-100/30 hover:bg-orange-100/20"
               >
@@ -134,8 +152,8 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
           </section>
           {/* 账户操作 */}
           <section className="pt-6">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => { logout(); onOpenChange(false); }}
               className="w-full h-14 rounded-3xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 gap-2 font-bold transition-colors"
             >
@@ -144,7 +162,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
           </section>
         </div>
         <DrawerFooter className="text-center pb-10">
-          <p className="text-[10px] text-muted-foreground font-medium tracking-tight">滴答日记 v1.1.0 · 守护每一份纯粹</p>
+          <p className="text-[10px] text-muted-foreground font-medium tracking-tight">滴答日记 v1.0.0 · 守护每一份纯粹</p>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

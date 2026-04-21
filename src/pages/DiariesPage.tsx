@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, History, Tag, Settings, Search, X, Calendar as CalendarIcon, Loader2, ClockPlus, Trash2, MoreVertical, Edit3 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Plus, History, Tag, Settings, Search, X, Calendar as CalendarIcon, Loader2, ClockPlus, Trash2, MoreVertical, Edit3, ArrowUp } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +37,16 @@ export function DiariesPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
 
+  const groupedDiaries = useMemo(() => {
+    const groups: Record<string, DiaryEntry[]> = {};
+    diaries.forEach(diary => {
+      const year = diary.date ? diary.date.slice(0, 4) : '未知年份';
+      if (!groups[year]) groups[year] = [];
+      groups[year].push(diary);
+    });
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [diaries]);
+
   useDebounce(
     () => {
       // Only fetch if unlocked to avoid 401 loops
@@ -62,6 +72,13 @@ export function DiariesPage() {
       return format(date, formatStr, { locale: zhCN });
     } catch (e) {
       return '??';
+    }
+  };
+
+  const scrollToYear = (year: string) => {
+    const element = document.getElementById(`year-${year}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -178,14 +195,9 @@ export function DiariesPage() {
           )}
         </AnimatePresence>
       </header>
-      <div className="flex-1 p-6 relative pb-14 w-full overflow-x-hidden">
-        <div className="absolute left-[39px] top-8 bottom-8 w-px bg-gradient-to-b from-orange-100 via-orange-100/50 to-transparent pointer-events-none" />
-        {/* {isLoading && diaries.length === 0 && (
-          <div className="absolute inset-0 bg-[#FFF7ED]/50 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
-            <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
-          </div>
-        )} */}
-        {diaries.length === 0 && !isLoading ? (
+      <div className="flex-1 p-6 relative pb-14 w-full">
+        <div className="absolute left-[39px] top-8 bottom-8 w-px bg-gradient-to-b from-orange-100 " />
+        {groupedDiaries.length === 0 && !isLoading ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -205,96 +217,121 @@ export function DiariesPage() {
           </motion.div>
         ) : (
           <div className="space-y-10">
-            {diaries.map((diary, index) => (
-              <motion.div
-                key={diary.id}
-                layout
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: Math.min(index * 0.05, 0.3) }}
-                className="relative flex gap-4 group"
-              >
-                <div className="flex flex-col items-center z-10 w-8 shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
-                    {diary.date?.split('-')[2] || '??'}
-                  </div>
-                  <div className="text-[10px] text-orange-400 font-bold mt-1 uppercase tracking-tighter">
-                    {safeFormatDate(diary.date, 'MMM')}
-                  </div>
-                </div>
-                <motion.div
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {setIsPreviewOpen(true); setSelectedDiary(diary)}}
-                  className="flex-1 overflow-hidden bg-white rounded-2xl p-5 shadow-sm border border-orange-50 cursor-pointer hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-500/5"
+            {groupedDiaries.map(([year, yearDiaries]) => (
+              <section key={year} id={`year-${year}`} className="relative scroll-mt-44">
+                <div
+                  onClick={() => scrollToYear(year)}
+                  className={cn('year-sticky-header sticky top-20 z-40 mb-8 py-2 -mx-2 px-2 rounded-2xl flex items-center gap-3 cursor-pointer group active:scale-[0.98] transition-all', showSearch ? 'top-50' : '')}
+                  style={{ top: showSearch ? '194px' : '80px' }}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-zinc-800 line-clamp-1 text-lg group-hover:text-orange-600 transition-colors">{diary.title}</h3>
-                    <div className="flex items-center gap-1.5">
-                      {diary.isMarkdown && <Badge variant="secondary" className="bg-zinc-50 text-zinc-400 text-[8px] h-6 font-mono">MD</Badge>}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 rounded-full">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl w-32 shadow-md shadow-zinc-100/50 bg-white">
-                          <DropdownMenuItem
-                            onClick={(e) => { e.stopPropagation(); navigate(`/editor/${diary.id}`) }}
-                            className="cursor-pointer"
-                          >
-                            <Edit3 className="h-4 w-4 mr-2" /> 编辑记录
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-rose-500 cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); setRecordToDelete(diary.id) }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> 抹除记忆
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent to-orange-100/30 to-orange-200 transition-colors" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black text-primary/90 tracking-tighter drop-shadow-sm px-4 py-1 rounded-full bg-white/90 border border-orange-100/50 shadow-sm backdrop-blur-sm bg-primary text-white border-primary transition-all duration-300">
+                      {year}
+                    </span>
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      whileHover={{ opacity: 1, y: 0 }}
+                      className="absolute -bottom-5 flex items-center gap-1 opacity-0 opacity-100 transition-all"
+                    >
+                      <ArrowUp size={10} className="text-primary" />
+                      <span className="text-[8px] font-bold text-primary uppercase tracking-tighter">回到顶部</span>
+                    </motion.div>
                   </div>
-                  <p className="text-sm text-zinc-500 line-clamp-3 leading-relaxed mb-2 font-light whitespace-pre-wrap">
-                    {diary.content.replace(/[#*`]/g, ' ')}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {(diary.categories || []).map(cat => (
-                      <Badge key={cat} variant="outline" className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-500 border-none rounded-lg">
-                        {cat}
-                      </Badge>
-                    ))}
-                    {(diary.tags || []).map(tag => (
-                      <span key={tag} className="text-[9px] text-orange-400 flex items-center gap-0.5 bg-orange-50/50 px-1.5 py-0.5 rounded-lg">
-                        <Tag size={8} /> {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-[10px] text-zinc-400 flex items-center justify-between border-t border-zinc-50 pt-3">
-                    <div className="flex items-center gap-1.5">
-                      {/* <div className="w-1 h-1 rounded-full bg-zinc-300"></div> */}
-                      <ClockPlus size={12} />
-                      <span>{format(diary.createdAt || Date.now(), ' yyyy-MM-dd HH:mm')}</span>
-                    </div>
-                    {/* <span className="text-zinc-300 italic font-mono">{diary.date}</span> */}
-                  </div>
-                </motion.div>
-              </motion.div>
+                  <div className="h-0.5 flex-1 bg-gradient-to-l from-transparent to-orange-100/30 to-orange-200 transition-colors" />
+                </div>
+                <div className="space-y-10">
+                  {yearDiaries.map((diary, index) => (
+                    <motion.div
+                      key={diary.id}
+                      layout
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: Math.min(index * 0.02, 0.2) }}
+                      className="relative flex gap-5 group"
+                    >
+                      <div className="flex flex-col items-center z-10 w-8 shrink-0 pt-1">
+                        <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-orange-500/20">
+                          {diary.date?.split('-')[2] || '??'}
+                        </div>
+                        <div className="text-[10px] text-orange-400 font-bold mt-1 uppercase tracking-tighter">
+                          {safeFormatDate(diary.date, 'MMM')}
+                        </div>
+                      </div>
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => { setIsPreviewOpen(true); setSelectedDiary(diary) }}
+                        className="flex-1 overflow-hidden bg-white rounded-2xl p-5 shadow-sm border border-orange-50 cursor-pointer hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-500/5"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-zinc-800 line-clamp-1 text-lg group-hover:text-orange-600 transition-colors">{diary.title}</h3>
+                          <div className="flex items-center gap-1.5">
+                            {diary.isMarkdown && <Badge variant="secondary" className="bg-zinc-50 text-zinc-400 text-[8px] h-6 font-mono">MD</Badge>}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 rounded-full">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="rounded-xl w-32 shadow-md shadow-zinc-100/50 bg-white">
+                                <DropdownMenuItem
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/editor/${diary.id}`) }}
+                                  className="cursor-pointer"
+                                >
+                                  <Edit3 className="h-4 w-4 mr-2" /> 编辑记录
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-rose-500 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); setRecordToDelete(diary.id) }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> 抹除记忆
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                        <p className="text-sm text-zinc-500 line-clamp-3 leading-relaxed mb-2 font-light whitespace-pre-wrap">
+                          {diary.content.replace(/[#*`]/g, ' ')}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {(diary.categories || []).map(cat => (
+                            <Badge key={cat} variant="outline" className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-500 border-none rounded-lg">
+                              {cat}
+                            </Badge>
+                          ))}
+                          {(diary.tags || []).map(tag => (
+                            <span key={tag} className="text-[9px] text-orange-400 flex items-center gap-0.5 bg-orange-50/50 px-1.5 py-0.5 rounded-lg">
+                              <Tag size={8} /> {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 flex items-center justify-between border-t border-zinc-50 pt-3">
+                          <div className="flex items-center gap-1.5">
+                            {/* <div className="w-1 h-1 rounded-full bg-zinc-300"></div> */}
+                            <ClockPlus size={12} />
+                            <span>{format(diary.createdAt || Date.now(), ' yyyy-MM-dd HH:mm')}</span>
+                          </div>
+                          {/* <span className="text-zinc-300 italic font-mono">{diary.date}</span> */}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
             ))}
 
             {/* 无尽滚动哨兵与状态反馈 */}
-            <div ref={loadMoreRef} className="pt-4 flex flex-col items-center gap-4 min-h-[100px]">
-              {isLoading ? (
-                <div className="flex flex-col items-center gap-3 py-6 opacity-60">
+            <div ref={loadMoreRef} className="mt-1 flex flex-col items-center gap-4 min-h-[60px]">
+              {(hasMore && isLoading) ? (
+                <div className="flex flex-col items-center gap-3 opacity-60">
                   <Loader2 size={24} className="text-orange-400 animate-spin" />
                   <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest animate-pulse">追溯时光中...</p>
                 </div>
-              ) : hasMore ? (
-                <div className="h-20" /> /* 哨兵占位 */
               ) : diaries.length > 0 && (
-                <div className="flex flex-col items-center gap-3 py-10 opacity-30">
+                <div className="flex flex-col items-center gap-3 py-2 opacity-30">
                   <div className="w-12 h-px bg-orange-200" />
                   <p className="text-[10px] text-orange-300 font-bold uppercase tracking-widest italic text-center">
-                    时光已载入全部 {totalCount} 段记忆<br/>
+                    时光已载入全部 {totalCount} 段记忆<br />
                     此处即是思绪的尽头
                   </p>
                   <div className="w-12 h-px bg-orange-200" />
@@ -314,7 +351,7 @@ export function DiariesPage() {
       <SettingsDrawer open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
 
       {/* 全屏幕 Loading */}
-      {isLoading && (
+      {isLoading && !hasMore && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

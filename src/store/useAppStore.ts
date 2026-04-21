@@ -15,14 +15,16 @@ interface AppState {
   logout: () => void;
   unlockList: (password: string) => Promise<boolean>;
   fetchDiaries: (params?: { q?: string; startDate?: string; endDate?: string; append?: boolean }) => Promise<void>;
+  fetchDiary: (id: string) => Promise<DiaryEntry | null>;
   addDiary: (diary: Omit<DiaryEntry, 'id' | 'createdAt'>) => Promise<void>;
   updateDiary: (id: string, updates: Partial<DiaryEntry>) => Promise<void>;
   deleteDiary: (id: string) => Promise<void>;
+  getAllExportDiaries: () => Promise<DiaryEntry[]>;
   importDiaries: (items: any[]) => Promise<void>;
   setSearchQuery: (query: string) => void;
 }
 const API_BASE = 'https://d.952737.xyz/api';
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: !!localStorage.getItem('whisper_token'),
   isLoading: false,
@@ -119,9 +121,31 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch (e) {
       console.error('Fetch diaries error', e);
-      toast.error(e?.message ||  '数据获取失败，请稍后重试');
+      toast.error(e?.message || '数据获取失败，请稍后重试');
     } finally {
       set({ isLoading: false });
+    }
+  },
+  fetchDiary: async (id: string) => {
+    const token = get().token;
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/diaries/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        get().logout();
+        throw new Error('会话过期');
+      }
+      const json = await res.json() as ApiResponse<DiaryEntry>;
+      if (json.success && json.data) {
+        return json.data;
+      }
+      throw new Error(json.error || '记录详情获取失败');
+    } catch (e) {
+      console.error('[STORE_ERR] Fetch single diary error:', e);
+      toast.error((e as Error).message || '无法追溯这段时光');
+      return null;
     }
   },
   addDiary: async (diaryData) => {
@@ -200,6 +224,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ isLoading: false });
     }
   },
+  // 获取所有需要导出的时光
+  getAllExportDiaries: async () => {
+    const token = get().token;
+    if (!token) return [];
+    try {
+      const res = await fetch(`${API_BASE}/diaries/export`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.status === 401) { get().logout(); return []; }
+      const json = await res.json() as ApiResponse<DiaryEntry[]>;
+      if (json.success && json.data) {
+        return json.data;
+      }
+      return [];
+    } catch (e) {
+      console.error('[STORE_ERR] Fetch all export diaries error:', e);
+      toast.error('时光记录导出失败');
+      return [];
+    }
+  },
+  // 批量导入时光
   importDiaries: async (items) => {
     const token = get().token;
     if (!token || !Array.isArray(items)) return;

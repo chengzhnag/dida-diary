@@ -61,7 +61,7 @@ export function DiaryPreviewDrawer({ diary, open, onOpenChange, onDelete }: Diar
                 <Calendar size={12} />
                 {safeFormatDate(diary.date)}
               </div>
-              <DrawerTitle className="text-2xl font-bold text-zinc-900 leading-tight">
+              <DrawerTitle className="text-2xl pt-2 font-bold text-zinc-900 leading-tight">
                 {diary.title || '无题'}
               </DrawerTitle>
             </div>
@@ -74,7 +74,7 @@ export function DiaryPreviewDrawer({ diary, open, onOpenChange, onDelete }: Diar
               <X size={20} />
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2">
             {(diary.categories || []).map(cat => (
               <Badge key={cat} variant="secondary" className="bg-blue-50 text-blue-500 border-none px-2.5 py-0.5 rounded-lg text-[10px] font-bold">
                 {cat}

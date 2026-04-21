@@ -92,6 +92,28 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
   });
 
+  // Get Single Diary
+  app.get('/api/diaries/:id', async (c) => {
+    const id = c.req.param('id');
+    try {
+      const row = await c.env.DB.prepare(`SELECT * FROM diaries WHERE id = ?`).bind(id).first<DiaryRow>();
+      return ok(c, row ? mapRowToEntry(row) : null);
+    } catch (e) {
+      return bad(c, '记录查询失败');
+    }
+  });
+
+  // Get All Diaries for Export
+  app.get('/api/diaries/export', async (c) => {
+    try {
+      const { results } = await c.env.DB.prepare(`SELECT * FROM diaries ORDER BY date DESC, createdAt DESC`).all<DiaryRow>();
+      const items = (results || []).map(mapRowToEntry);
+      return ok(c, { items: items });
+    } catch (e) {
+      return bad(c, '备份导出失败');
+    }
+  });
+
   app.post('/api/diaries/verify-list', async (c) => {
     try {
       const { password } = await c.req.json();
