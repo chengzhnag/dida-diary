@@ -176,6 +176,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const token = get().token;
     if (!token) return;
     try {
+      set({ isLoading: true });
       const res = await fetch(`${API_BASE}/diaries/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -190,6 +191,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch (e) {
       toast.error('抹除记忆失败');
+    } finally {
+      set({ isLoading: false });
     }
   },
   importDiaries: async (items) => {

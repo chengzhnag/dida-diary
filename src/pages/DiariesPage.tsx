@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, History, Tag, Settings, Search, X, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { Plus, History, Tag, Settings, Search, X, Calendar as CalendarIcon, Loader2, ClockPlus, Trash2, MoreVertical, Edit3 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,20 +10,29 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { SettingsDrawer } from '@/components/settings/SettingsDrawer';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DiaryPreviewDrawer } from '@/components/diaries/DiaryPreviewDrawer';
 import { cn } from '@/lib/utils';
+import { DiaryEntry } from '@shared/types';
 import { useDebounce } from 'react-use';
+
 export function DiariesPage() {
   const navigate = useNavigate();
   const diaries = useAppStore(useShallow(s => s.diaries));
   const totalCount = useAppStore(s => s.totalCount);
   const isLoading = useAppStore(s => s.isLoading);
   const fetchDiaries = useAppStore(s => s.fetchDiaries);
+  const deleteDiary = useAppStore(s => s.deleteDiary);
   const isListUnlocked = useAppStore(s => s.isListUnlocked);
   const [showSearch, setShowSearch] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = React.useState<string | null>(null);
+  const [selectedDiary, setSelectedDiary] = useState<DiaryEntry | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
 
   useDebounce(
@@ -103,13 +112,14 @@ export function DiariesPage() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden mt-4 space-y-3"
+              style={{ padding: '2px' }}
             >
               <div className="relative">
                 <Input
                   placeholder="搜索标题、内容或标签..."
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="bg-white border-orange-100 pl-9 rounded-xl text-sm h-11 shadow-sm focus:border-orange-300 transition-all"
+                  className="bg-white border-orange-100 pl-9 rounded-xl text-sm h-11 shadow-sm focus:border-orange-300"
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-300" size={16} />
                 {keyword && (
@@ -121,6 +131,7 @@ export function DiariesPage() {
               <div className="flex gap-2">
                 <div className="flex-1 relative">
                   <Input
+                    placeholder='选择开始日期筛选'
                     type="date"
                     value={startDate}
                     onChange={e => setStartDate(e.target.value)}
@@ -130,6 +141,7 @@ export function DiariesPage() {
                 </div>
                 <div className="flex-1 relative">
                   <Input
+                    placeholder='选择结束日期筛选'
                     type="date"
                     value={endDate}
                     onChange={e => setEndDate(e.target.value)}
@@ -142,13 +154,13 @@ export function DiariesPage() {
           )}
         </AnimatePresence>
       </header>
-      <div className="flex-1 p-6 relative pb-28 w-full overflow-x-hidden">
+      <div className="flex-1 p-6 relative pb-14 w-full overflow-x-hidden">
         <div className="absolute left-[39px] top-8 bottom-8 w-px bg-gradient-to-b from-orange-100 via-orange-100/50 to-transparent pointer-events-none" />
-        {isLoading && diaries.length === 0 && (
+        {/* {isLoading && diaries.length === 0 && (
           <div className="absolute inset-0 bg-[#FFF7ED]/50 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
             <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
           </div>
-        )}
+        )} */}
         {diaries.length === 0 && !isLoading ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -176,7 +188,7 @@ export function DiariesPage() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: Math.min(index * 0.05, 0.3) }}
-                className="relative flex gap-5 group"
+                className="relative flex gap-4 group"
               >
                 <div className="flex flex-col items-center z-10 w-8 shrink-0">
                   <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
@@ -188,15 +200,38 @@ export function DiariesPage() {
                 </div>
                 <motion.div
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(`/editor/${diary.id}`)}
-                  className="flex-1 bg-white rounded-2xl p-5 shadow-sm border border-orange-50 cursor-pointer hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-500/5"
+                  onClick={() => {setIsPreviewOpen(true); setSelectedDiary(diary)}}
+                  className="flex-1 overflow-hidden bg-white rounded-2xl p-5 shadow-sm border border-orange-50 cursor-pointer hover:border-orange-200 transition-all hover:shadow-xl hover:shadow-orange-500/5"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-zinc-800 line-clamp-1 text-lg group-hover:text-orange-600 transition-colors">{diary.title}</h3>
-                    {diary.isMarkdown && <Badge variant="secondary" className="bg-zinc-50 text-zinc-400 text-[8px] h-4 font-mono">MD</Badge>}
+                    <div className="flex items-center gap-1.5">
+                      {diary.isMarkdown && <Badge variant="secondary" className="bg-zinc-50 text-zinc-400 text-[8px] h-6 font-mono">MD</Badge>}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 rounded-full">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl w-32 shadow-md shadow-zinc-100/50 bg-white">
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); navigate(`/editor/${diary.id}`) }}
+                            className="cursor-pointer"
+                          >
+                            <Edit3 className="h-4 w-4 mr-2" /> 编辑记录
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-rose-500 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); setRecordToDelete(diary.id) }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> 抹除记忆
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-500 line-clamp-3 leading-relaxed mb-4 font-light">
-                    {diary.content.replace(/[#*`\n]/g, ' ')}
+                  <p className="text-sm text-zinc-500 line-clamp-3 leading-relaxed mb-2 font-light whitespace-pre-wrap">
+                    {diary.content.replace(/[#*`]/g, ' ')}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {(diary.categories || []).map(cat => (
@@ -212,10 +247,11 @@ export function DiariesPage() {
                   </div>
                   <div className="text-[10px] text-zinc-400 flex items-center justify-between border-t border-zinc-50 pt-3">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-1 h-1 rounded-full bg-zinc-300" />
-                      <span>{format(diary.createdAt || Date.now(), 'HH:mm')}</span>
+                      {/* <div className="w-1 h-1 rounded-full bg-zinc-300"></div> */}
+                      <ClockPlus size={12} />
+                      <span>{format(diary.createdAt || Date.now(), ' yyyy-MM-dd HH:mm')}</span>
                     </div>
-                    <span className="text-zinc-300 italic font-mono">{diary.date}</span>
+                    {/* <span className="text-zinc-300 italic font-mono">{diary.date}</span> */}
                   </div>
                 </motion.div>
               </motion.div>
@@ -230,6 +266,45 @@ export function DiariesPage() {
         <Plus className="text-white w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />
       </Button>
       <SettingsDrawer open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      {/* 全屏幕 Loading */}
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed top-0 left-0 w-full z-1001 h-full flex items-center justify-center"
+        >
+          <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-rose-500 border-t-transparent" />
+            <p className="text-sm font-bold text-slate-700">加载中...</p>
+          </div>
+        </motion.div>
+      )}
+      <AlertDialog open={!!recordToDelete} onOpenChange={(open) => !open && setRecordToDelete(null)}>
+        <AlertDialogContent className="rounded-3xl max-w-[320px] bg-white border-orange-100 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>确定要抹除吗？</AlertDialogTitle>
+            <AlertDialogDescription>这段记忆将无法找回。</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row gap-2 pt-4">
+            <AlertDialogCancel className="flex-1 mt-0 rounded-2xl border-orange-100 text-zinc-500 bg-zinc-50 h-11 text-xs">
+              留着
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => recordToDelete && deleteDiary(recordToDelete)}
+              className="flex-1 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold h-11 text-xs"
+            >
+              抹除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <DiaryPreviewDrawer
+        diary={selectedDiary}
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        onDelete={deleteDiary}
+      />
     </div>
   );
 }

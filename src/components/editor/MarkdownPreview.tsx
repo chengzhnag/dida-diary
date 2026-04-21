@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
 interface MarkdownPreviewProps {
   content: string;
@@ -11,6 +12,7 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
     <div className={cn("prose prose-zinc max-w-none break-words dark:prose-invert prose-sm sm:prose-base", className)}>
       <ReactMarkdown 
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2 text-zinc-900">{children}</h1>,
           h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-1 text-zinc-800">{children}</h2>,
@@ -36,6 +38,32 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
           input: ({ checked }) => (
             <input type="checkbox" checked={checked} readOnly className="mr-2 accent-orange-500" />
           ),
+          img: ({ src, alt }) => {
+            console.log(src, alt, 'img src');
+            if (!src) return null;
+            return (
+              <img src={src} alt={alt} className="w-full rounded-lg" />
+            );
+          },
+          table: ({ children }) => (
+            <table className="w-full border-collapse border border-zinc-100">
+              {children}
+            </table>
+          ),
+          th: ({ children }) => (
+            <th className="p-2 border border-zinc-100 text-left">{children}</th>
+          ),
+          td: ({ children }) => (
+            <td className="p-2 border border-zinc-100 text-left">{children}</td>
+          ),
+          a: ({ children, href }) => {
+            if (!href) return null;
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">
+                {children}
+              </a>
+            );
+          }
         }}
       >
         {content || "_暂无内容_"}

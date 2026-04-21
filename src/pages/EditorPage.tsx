@@ -6,7 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@/components/ui/button';
 import { MarkdownPreview } from '@/components/editor/MarkdownPreview';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
-import { cn } from '@/lib/utils';
+import { cn, checkIsMarkdown } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -42,6 +42,8 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const [isPreview, setIsPreview] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [isCategoryError, setIsCategoryError] = useState(false);
+  const [checkMdDialogVisible, setCheckMdDialogVisible] = useState(false);
+  const isCheckMdDialogOnce = useRef<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedIdRef = useRef<string | null>(null);
 
@@ -53,6 +55,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
     setDate(format(new Date(), 'yyyy-MM-dd'));
     setIsMarkdown(false);
     setIsPreview(false);
+    isCheckMdDialogOnce.current = false;
   }
 
   useEffect(() => {
@@ -79,6 +82,16 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       initializedIdRef.current = 'new';
     }
   }, [id, diaries, navigate, isLoading]);
+
+  useEffect(() => {
+    if (content && !isMarkdown) {
+      const flag = checkIsMarkdown(content);
+      if (flag && !isCheckMdDialogOnce.current) {
+        setCheckMdDialogVisible(true);
+        isCheckMdDialogOnce.current = true
+      }
+    }
+  }, [content, isMarkdown]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -188,7 +201,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               size="icon"
               onClick={() => {
                 initializedIdRef.current = null;
-                navigate('/');
+                navigate('/editor');
               }}
               className="rounded-full hover:text-orange-500 h-9 w-9"
               title="新建记录"
@@ -264,7 +277,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="text-[12px] font-bold text-zinc-700 bg-transparent border-none p-0 focus:ring-0 cursor-pointer w-[100px] appearance-none outline-none"
+              className="text-[14px] font-bold text-zinc-700 bg-transparent border-none p-0 focus:ring-0 cursor-pointer w-[110px] appearance-none outline-none"
             />
           </div>
           <motion.div
@@ -284,10 +297,11 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               ))}
               <input
                 placeholder="+ 分类 (回车添加)"
+                enterKeyHint='enter'
                 value={newCategory}
                 onChange={e => setNewCategory(e.target.value)}
                 onKeyDown={addCategory}
-                className="flex-1 text-[12px] bg-transparent border-none p-0 focus:ring-0 placeholder:text-zinc-300 min-w-[60px] outline-none"
+                className="flex-1 text-[14px] bg-transparent border-none p-0 focus:ring-0 placeholder:text-zinc-300 min-w-[60px] outline-none"
               />
             </div>
           </motion.div>
@@ -332,6 +346,34 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           setIsMarkdown={setIsMarkdown}
         />
       )}
+
+      <AlertDialog open={checkMdDialogVisible}>
+        <AlertDialogContent className="rounded-3xl max-w-[320px] bg-white border-orange-100 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-zinc-900 font-bold">要开启Markdown模式吗？</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-500 text-xs leading-relaxed">
+              检测到你的日记中包含Markdown语法，是否要开启Markdown模式？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row gap-2 pt-4">
+            <AlertDialogCancel
+              onClick={() => setCheckMdDialogVisible(false)}
+              className="flex-1 mt-0 rounded-2xl border-orange-100 text-zinc-500 bg-zinc-50 h-11 text-xs"
+            >
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsMarkdown(true);
+                setCheckMdDialogVisible(false);
+              }}
+              className="flex-1 rounded-2xl text-white font-bold h-11 text-xs"
+            >
+              确定
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
