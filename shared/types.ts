@@ -14,6 +14,13 @@ export interface DiaryEntry {
   createdAt: number;
   isLocked?: boolean;
 }
+export interface PaginatedDiaries {
+  items: DiaryEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
 export interface AuthResponse {
   success: boolean;
   token?: string;

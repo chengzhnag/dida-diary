@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, History, Tag, Settings, Search, X, Calendar as CalendarIcon, Loader2, ClockPlus, Trash2, MoreVertical, Edit3 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -22,6 +22,7 @@ export function DiariesPage() {
   const diaries = useAppStore(useShallow(s => s.diaries));
   const totalCount = useAppStore(s => s.totalCount);
   const isLoading = useAppStore(s => s.isLoading);
+  const hasMore = useAppStore(s => s.hasMore);
   const fetchDiaries = useAppStore(s => s.fetchDiaries);
   const deleteDiary = useAppStore(s => s.deleteDiary);
   const isListUnlocked = useAppStore(s => s.isListUnlocked);
@@ -33,6 +34,7 @@ export function DiariesPage() {
   const [recordToDelete, setRecordToDelete] = React.useState<string | null>(null);
   const [selectedDiary, setSelectedDiary] = useState<DiaryEntry | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
 
   useDebounce(
@@ -62,6 +64,28 @@ export function DiariesPage() {
       return '??';
     }
   };
+
+  // 无尽滚动观察器
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !isLoading && isListUnlocked) {
+          fetchDiaries({ q: keyword, startDate, endDate, append: true });
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasMore, isLoading, isListUnlocked, fetchDiaries, keyword, startDate, endDate]);
 
   if (!isListUnlocked && !isLoading) return null;
 
@@ -256,6 +280,27 @@ export function DiariesPage() {
                 </motion.div>
               </motion.div>
             ))}
+
+            {/* 无尽滚动哨兵与状态反馈 */}
+            <div ref={loadMoreRef} className="pt-4 flex flex-col items-center gap-4 min-h-[100px]">
+              {isLoading ? (
+                <div className="flex flex-col items-center gap-3 py-6 opacity-60">
+                  <Loader2 size={24} className="text-orange-400 animate-spin" />
+                  <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest animate-pulse">追溯时光中...</p>
+                </div>
+              ) : hasMore ? (
+                <div className="h-20" /> /* 哨兵占位 */
+              ) : diaries.length > 0 && (
+                <div className="flex flex-col items-center gap-3 py-10 opacity-30">
+                  <div className="w-12 h-px bg-orange-200" />
+                  <p className="text-[10px] text-orange-300 font-bold uppercase tracking-widest italic text-center">
+                    时光已载入全部 {totalCount} 段记忆<br/>
+                    此处即是思绪的尽头
+                  </p>
+                  <div className="w-12 h-px bg-orange-200" />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -265,7 +310,9 @@ export function DiariesPage() {
       >
         <Plus className="text-white w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />
       </Button>
+
       <SettingsDrawer open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+
       {/* 全屏幕 Loading */}
       {isLoading && (
         <motion.div
@@ -279,6 +326,7 @@ export function DiariesPage() {
           </div>
         </motion.div>
       )}
+
       <AlertDialog open={!!recordToDelete} onOpenChange={(open) => !open && setRecordToDelete(null)}>
         <AlertDialogContent className="rounded-3xl max-w-[320px] bg-white border-orange-100 shadow-2xl">
           <AlertDialogHeader>

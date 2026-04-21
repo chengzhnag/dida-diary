@@ -1,34 +1,36 @@
 import { create } from 'zustand';
-import { DiaryEntry, ApiResponse } from '@shared/types';
+import { DiaryEntry, ApiResponse, PaginatedDiaries } from '@shared/types';
 import { toast } from 'sonner';
-
 interface AppState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isListUnlocked: boolean;
   diaries: DiaryEntry[];
   totalCount: number;
+  currentPage: number;
+  hasMore: boolean;
   searchQuery: string;
   token: string | null;
   login: (password: string) => Promise<boolean>;
   logout: () => void;
   unlockList: (password: string) => Promise<boolean>;
-  fetchDiaries: (params?: { q?: string; startDate?: string; endDate?: string }) => Promise<void>;
+  fetchDiaries: (params?: { q?: string; startDate?: string; endDate?: string; append?: boolean }) => Promise<void>;
   addDiary: (diary: Omit<DiaryEntry, 'id' | 'createdAt'>) => Promise<void>;
   updateDiary: (id: string, updates: Partial<DiaryEntry>) => Promise<void>;
   deleteDiary: (id: string) => Promise<void>;
   importDiaries: (items: any[]) => Promise<void>;
   setSearchQuery: (query: string) => void;
 }
-
 const API_BASE = 'https://d.952737.xyz/api';
-
+const PAGE_SIZE = 20;
 export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: !!localStorage.getItem('whisper_token'),
   isLoading: false,
   isListUnlocked: false,
   diaries: [],
   totalCount: 0,
+  currentPage: 1,
+  hasMore: false,
   searchQuery: '',
   token: localStorage.getItem('whisper_token'),
   login: async (password: string) => {
@@ -46,7 +48,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return false;
     } catch (e) {
-      console.error('Login error', e);
+      console.error('[AUTH] Login error', e);
       return false;
     }
   },
@@ -57,6 +59,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       token: null,
       diaries: [],
       totalCount: 0,
+      currentPage: 1,
+      hasMore: false,
       isListUnlocked: false,
       searchQuery: '',
     });
@@ -88,33 +92,34 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchDiaries: async (params) => {
     const token = get().token;
     if (!token) return;
+    const isAppend = params?.append ?? false;
+    const nextPage = isAppend ? get().currentPage + 1 : 1;
     set({ isLoading: true });
     try {
       const url = new URL(`${API_BASE}/diaries`);
-      const isFiltered = !!(params?.q?.trim() || params?.startDate || params?.endDate);
       if (params?.q) url.searchParams.append('q', params.q);
       if (params?.startDate) url.searchParams.append('startDate', params.startDate);
       if (params?.endDate) url.searchParams.append('endDate', params.endDate);
+      url.searchParams.append('page', nextPage.toString());
+      url.searchParams.append('limit', PAGE_SIZE.toString());
       const res = await fetch(url.toString(), {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        get().logout();
-        return;
-      }
-      const json = await res.json() as ApiResponse<{ items: DiaryEntry[] }>;
+      if (res.status === 401) { get().logout(); return; }
+      const json = await res.json() as ApiResponse<PaginatedDiaries>;
       if (json.success && json.data) {
-        set({
-          diaries: json.data.items,
-          // Only update global total count when no filters are applied
-          totalCount: isFiltered ? get().totalCount : json.data.items.length
-        });
+        set(state => ({
+          diaries: isAppend ? [...state.diaries, ...json.data!.items] : json.data!.items,
+          totalCount: json.data!.total,
+          currentPage: json.data!.page,
+          hasMore: json.data!.hasMore
+        }));
       } else {
         toast.error(json.error || '获取时光记录失败');
       }
     } catch (e) {
       console.error('Fetch diaries error', e);
-      toast.error('网络同步失败');
+      toast.error(e?.message ||  '数据获取失败，请稍后重试');
     } finally {
       set({ isLoading: false });
     }
@@ -143,7 +148,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }));
       }
     } catch (e) {
-      toast.error('心情存入失败');
+      toast.error('时光同步失败');
     }
   },
   updateDiary: async (id, updates) => {
@@ -169,7 +174,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }));
       }
     } catch (e) {
-      toast.error('更新记忆失败');
+      toast.error('修正时光失败');
     }
   },
   deleteDiary: async (id) => {
@@ -190,7 +195,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }));
       }
     } catch (e) {
-      toast.error('抹除记忆失败');
+      toast.error('抹除失败');
     } finally {
       set({ isLoading: false });
     }
@@ -211,10 +216,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       const json = await res.json() as ApiResponse;
       if (json.success) {
         await get().fetchDiaries();
-        toast.success('时光记录已全量同步');
+        toast.success('时光记录已全量导入');
       }
     } catch (e) {
-      toast.error('数据找回失败');
+      toast.error('数据导入失败');
     }
   },
   setSearchQuery: (query) => set({ searchQuery: query }),
