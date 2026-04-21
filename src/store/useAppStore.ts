@@ -9,7 +9,7 @@ interface AppState {
   totalCount: number;
   currentPage: number;
   hasMore: boolean;
-  searchQuery: string;
+  searchQuery: object;
   token: string | null;
   login: (password: string) => Promise<boolean>;
   logout: () => void;
@@ -21,7 +21,7 @@ interface AppState {
   deleteDiary: (id: string) => Promise<void>;
   getAllExportDiaries: () => Promise<DiaryEntry[]>;
   importDiaries: (items: any[]) => Promise<void>;
-  setSearchQuery: (query: string) => void;
+  setSearchQuery: (query: object) => void;
 }
 const API_BASE = 'https://d.952737.xyz/api';
 const PAGE_SIZE = 10;
@@ -33,7 +33,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   totalCount: 0,
   currentPage: 1,
   hasMore: false,
-  searchQuery: '',
+  searchQuery: {},
   token: localStorage.getItem('whisper_token'),
   login: async (password: string) => {
     try {
@@ -64,7 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentPage: 1,
       hasMore: false,
       isListUnlocked: false,
-      searchQuery: '',
+      searchQuery: {},
     });
     toast.info('已安全退出滴答日记');
   },
@@ -267,5 +267,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       toast.error('数据导入失败');
     }
   },
-  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSearchQuery: (query = {}) => {
+    set({ searchQuery: query, currentPage: 1, hasMore: false });
+  },
 }));

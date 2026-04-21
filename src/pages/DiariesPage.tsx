@@ -23,8 +23,10 @@ export function DiariesPage() {
   const totalCount = useAppStore(s => s.totalCount);
   const isLoading = useAppStore(s => s.isLoading);
   const hasMore = useAppStore(s => s.hasMore);
+  const searchQuery = useAppStore(s => s.searchQuery);
   const fetchDiaries = useAppStore(s => s.fetchDiaries);
   const deleteDiary = useAppStore(s => s.deleteDiary);
+  const setSearchQuery = useAppStore(useShallow(s => s.setSearchQuery));
   const isListUnlocked = useAppStore(s => s.isListUnlocked);
   const [showSearch, setShowSearch] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -37,6 +39,11 @@ export function DiariesPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
 
+  useEffect(() => {
+    console.log('diaries', diaries)
+    console.log('hasMore', hasMore)
+  }, [hasMore, diaries])
+
   const groupedDiaries = useMemo(() => {
     const groups: Record<string, DiaryEntry[]> = {};
     diaries.forEach(diary => {
@@ -46,17 +53,6 @@ export function DiariesPage() {
     });
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [diaries]);
-
-  useDebounce(
-    () => {
-      // Only fetch if unlocked to avoid 401 loops
-      if (isListUnlocked) {
-        fetchDiaries({ q: keyword, startDate, endDate });
-      }
-    },
-    500,
-    [keyword, startDate, endDate, isListUnlocked]
-  );
 
   useEffect(() => {
     // If not loading and not unlocked, force verification
@@ -82,13 +78,25 @@ export function DiariesPage() {
     }
   };
 
+  const handleSearch = async () => {
+    setSearchQuery({ q: keyword, startDate, endDate });
+    await fetchDiaries({ q: keyword, startDate, endDate, append: false });
+  };
+  const handleReset = async () => {
+    setKeyword('');
+    setStartDate('');
+    setEndDate('');
+    setSearchQuery({});
+    await fetchDiaries({ append: false });
+  };
+
   // 无尽滚动观察器
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
         if (first.isIntersecting && hasMore && !isLoading && isListUnlocked) {
-          fetchDiaries({ q: keyword, startDate, endDate, append: true });
+          fetchDiaries({ ...searchQuery, append: true });
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
@@ -102,13 +110,13 @@ export function DiariesPage() {
         observer.unobserve(currentRef);
       }
     };
-  }, [hasMore, isLoading, isListUnlocked, fetchDiaries, keyword, startDate, endDate]);
+  }, [hasMore, isLoading, isListUnlocked, fetchDiaries, searchQuery]);
 
   if (!isListUnlocked && !isLoading) return null;
 
   return (
     <div className="relative min-h-full bg-[#FFF7ED] flex flex-col">
-      <header className="sticky top-0 z-40 bg-[#FFF7ED]/95 backdrop-blur-lg px-6 py-4 border-b border-orange-100 shrink-0">
+      <header className="sticky top-0 z-50 bg-[#FFF7ED]/95 backdrop-blur-lg px-6 py-4 border-b border-orange-100 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
@@ -191,6 +199,25 @@ export function DiariesPage() {
                   <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-300 pointer-events-none" size={14} />
                 </div>
               </div>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl h-11 text-xs font-bold gap-2"
+                >
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                  执行查询
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleReset}
+                  disabled={isLoading}
+                  className="flex-1 border-orange-100 text-muted-foreground hover:bg-orange-50 rounded-xl h-11 text-xs font-bold gap-2"
+                >
+                  <X size={16} />
+                  重置条件
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -222,11 +249,11 @@ export function DiariesPage() {
                 <div
                   onClick={() => scrollToYear(year)}
                   className={cn('year-sticky-header sticky top-20 z-40 mb-8 py-2 -mx-2 px-2 rounded-2xl flex items-center gap-3 cursor-pointer group active:scale-[0.98] transition-all', showSearch ? 'top-50' : '')}
-                  style={{ top: showSearch ? '194px' : '80px' }}
+                  style={{ top: showSearch ? '254px' : '80px' }}
                 >
                   <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent to-orange-100/30 to-orange-200 transition-colors" />
                   <div className="flex flex-col items-center">
-                    <span className="text-lg font-black text-primary/90 tracking-tighter drop-shadow-sm px-4 py-1 rounded-full bg-white/90 border border-orange-100/50 shadow-sm backdrop-blur-sm bg-primary text-white border-primary transition-all duration-300">
+                    <span className="text-lg font-black text-primary/90 tracking-tighter drop-shadow-sm px-4 py-1 rounded-full bg-white/90 border border-orange-100/50 shadow-sm backdrop-blur-sm bg-primary border-primary transition-all duration-300">
                       {year}
                     </span>
                     <motion.div
