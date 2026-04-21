@@ -57,27 +57,35 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const q = c.req.query('q')?.toLowerCase();
     const startDate = c.req.query('startDate');
     const endDate = c.req.query('endDate');
-    const limit = Math.min(parseInt(c.req.query('limit') || '1000'), 2000);
-    let sql = `SELECT * FROM diaries WHERE 1=1`;
+    // Strict param parsing
+    const rawPage = parseInt(c.req.query('page') || '1');
+    const rawLimit = parseInt(c.req.query('limit') || '20');
+    const page = Math.max(isNaN(rawPage) ? 1 : rawPage, 1);
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 200);
+    const offset = (page - 1) * limit;
+    let whereClause = ` WHERE 1=1`;
     const params: any[] = [];
     if (q) {
-      sql += ` AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ? OR tags LIKE ? OR categories LIKE ?)`;
+      whereClause += ` AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ? OR tags LIKE ? OR categories LIKE ?)`;
       const pattern = `%${q}%`;
       params.push(pattern, pattern, pattern, pattern);
     }
     if (startDate) {
-      sql += ` AND date >= ?`;
+      whereClause += ` AND date >= ?`;
       params.push(startDate);
     }
     if (endDate) {
-      sql += ` AND date <= ?`;
+      whereClause += ` AND date <= ?`;
       params.push(endDate);
     }
-    sql += ` ORDER BY date DESC, createdAt DESC LIMIT ?`;
-    params.push(limit);
     try {
-      const { results } = await c.env.DB.prepare(sql).bind(...params).all<DiaryRow>();
-      return ok(c, { items: (results || []).map(mapRowToEntry) });
+      const countResult = await c.env.DB.prepare(`SELECT COUNT(*) as total FROM diaries ${whereClause}`).bind(...params).first<{ total: number }>();
+      const total = countResult?.total || 0;
+      const sql = `SELECT * FROM diaries ${whereClause} ORDER BY date DESC, createdAt DESC LIMIT ? OFFSET ?`;
+      const { results } = await c.env.DB.prepare(sql).bind(...[...params, limit, offset]).all<DiaryRow>();
+      const items = (results || []).map(mapRowToEntry);
+      const hasMore = offset + items.length < total;
+      return ok(c, { items, total, page, limit, hasMore });
     } catch (e) {
       console.error('D1 Query Error:', e);
       return bad(c, `查询失败: ${e instanceof Error ? e.message : '未知错误'}`);
