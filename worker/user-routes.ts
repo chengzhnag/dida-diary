@@ -108,7 +108,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     try {
       const { results } = await c.env.DB.prepare(`SELECT * FROM diaries ORDER BY date DESC, createdAt DESC`).all<DiaryRow>();
       const items = (results || []).map(mapRowToEntry);
-      return ok(c, { items: items });
+      return ok(c, items);
     } catch (e) {
       return bad(c, '备份导出失败');
     }
