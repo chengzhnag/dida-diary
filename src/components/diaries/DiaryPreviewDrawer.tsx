@@ -99,7 +99,7 @@ export function DiaryPreviewDrawer({ diary, open, onOpenChange, onDelete }: Diar
             <div className="mt-8 pt-6 border-t border-zinc-50 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
               <div className="flex items-center gap-1.5">
                 <Clock size={12} />
-                记录于 {format(diary.createdAt || Date.now(), 'HH:mm:ss')}
+                记录于 {format(diary.createdAt || Date.now(), 'yyyy-MM-dd HH:mm:ss')}
               </div>
               <div className="italic font-mono">ID: {diary.id.slice(0, 8)}</div>
             </div>

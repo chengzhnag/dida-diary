@@ -311,7 +311,7 @@ export function DiariesPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: Math.min(index * 0.02, 0.2) }}
-                      className="relative flex gap-5 group"
+                      className="relative flex gap-4 group"
                     >
                       <div className="flex flex-col items-center z-10 w-8 shrink-0 pt-1">
                         <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-orange-500/20">
