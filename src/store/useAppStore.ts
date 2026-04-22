@@ -229,7 +229,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const token = get().token;
     if (!token) return [];
     try {
-      const res = await fetch(`${API_BASE}/diaries/export`, {
+      const res = await fetch(`${API_BASE}/diaries-export`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.status === 401) { get().logout(); return []; }

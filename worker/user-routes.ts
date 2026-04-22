@@ -104,7 +104,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
 
   // Get All Diaries for Export
-  app.get('/api/diaries/export', async (c) => {
+  app.get('/api/diaries-export', async (c) => {
     try {
       const { results } = await c.env.DB.prepare(`SELECT * FROM diaries ORDER BY date DESC, createdAt DESC`).all<DiaryRow>();
       const items = (results || []).map(mapRowToEntry);
