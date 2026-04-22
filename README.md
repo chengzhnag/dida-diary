@@ -84,7 +84,7 @@
 3.  **创建 D1 数据库并初始化表**
     - 在左侧导航栏选择 **存储和数据库** > **D1 SQL 数据库**。
     - 点击 **创建数据库**，按提示创建数据库实例。
-    - 记录数据库的 **名称**（例如：`DIDA_DB`）。
+    - 记录数据库的 **名称**（例如：`dida_db`）。
     - 初始化表：
       - **控制台**（在 D1 数据库管理界面手动执行 `schema.sql` 中的建表语句）。
 
@@ -103,12 +103,28 @@
       ADMIN_PASS: 自定义管理密码
       DIARY_PASS: 自定义时光锁密码
       JWT_SECRET: 自定义密钥（务必复杂）
-      DB: <你的数据库绑定名称>  # 例如：DIDA_DB
+      DB: <你的数据库绑定名称，需要去绑定D1数据库，绑定名称一定要是DB>  # 例如：dida_db
       ```
 
 7.  **保存并部署**
     - 点击 **Save and Deploy**，等待部署完成。
     - 部署成功后，点击 **Visit site** 访问你的在线应用。
+
+
+**全流程步骤图片**：  
+| 步骤 | 图片预览 |
+| :--- | :--- |
+| 步骤 1 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.2h8wolad0n.webp) |
+| 步骤 2 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.2dpaqvjj5m.webp) |
+| 步骤 3 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.39ls6c4iw3.webp) |
+| 步骤 4 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.64egc4j610.webp) |
+| 步骤 5 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.9ddk8rxc9j.webp) |
+| 步骤 6 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.7axrkpz03s.webp) |
+| 步骤 7 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.26m2vfzr1o.webp) |
+| 步骤 8 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.58hywo2eb3.webp) |
+| 步骤 9 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.3d5e41shbx.webp) |
+| 步骤 10 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.8l0or1m8bp.webp) |
+| 步骤 11 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.szjreu5d5.webp) |
 
 ---
 
