@@ -37,6 +37,7 @@ export function DiariesPage() {
   const [selectedDiary, setSelectedDiary] = useState<DiaryEntry | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const scrollTopTimingRef = useRef(null);
   const isFiltered = keyword.trim() !== '' || startDate !== '' || endDate !== '';
 
   useEffect(() => {
@@ -78,16 +79,51 @@ export function DiariesPage() {
     }
   };
 
-  const handleSearch = async () => {
-    setSearchQuery({ q: keyword, startDate, endDate });
-    await fetchDiaries({ q: keyword, startDate, endDate, append: false });
+  // 平滑滚动到顶部
+  function scrollToTopAndWait() {
+    return new Promise((resolve) => {
+      // 开始平滑滚动
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // 检测滚动是否完成
+      const checkScroll = () => {
+        if (window.scrollY === 0) {
+          // 滚动已完成
+          resolve(true);
+          if (scrollTopTimingRef.current) {
+            clearTimeout(scrollTopTimingRef.current);
+          }
+          scrollTopTimingRef.current = null;
+          window.removeEventListener('scroll', checkScroll);
+        } else {
+          // 继续检测
+          scrollTopTimingRef.current = setTimeout(checkScroll, 50);
+        }
+      };
+
+      // 添加滚动事件监听
+      window.addEventListener('scroll', checkScroll);
+      checkScroll(); // 立即检查一次
+    });
+  }
+
+  const handleSearch = () => {
+    if (scrollTopTimingRef.current) return;
+    scrollToTopAndWait().then(() => {
+      setSearchQuery({ q: keyword, startDate, endDate });
+      fetchDiaries({ q: keyword, startDate, endDate, append: false });
+    });
   };
-  const handleReset = async () => {
-    setKeyword('');
-    setStartDate('');
-    setEndDate('');
-    setSearchQuery({});
-    await fetchDiaries({ append: false });
+
+  const handleReset = () => {
+    if (scrollTopTimingRef.current) return;
+    scrollToTopAndWait().then(() => {
+      setKeyword('');
+      setStartDate('');
+      setEndDate('');
+      setSearchQuery({});
+      fetchDiaries({ append: false });
+    });
   };
 
   // 无尽滚动观察器

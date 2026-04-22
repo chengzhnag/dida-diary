@@ -161,7 +161,7 @@ export function EditorToolbar({
         </div>
       </div>
 
-      <div className={cn('border-t border-orange-100 bg-white/80 backdrop-blur-md transition-all duration-300', isEmojiOpen ? 'h-[300px]' : 'h-0')}>
+      <div className={cn('border-t border-orange-100 bg-white/80 backdrop-blur-md transition-all duration-300 overflow-hidden', isEmojiOpen ? 'h-[300px]' : 'h-0')}>
         <div className="p-0 overflow-hidden">
           <EmojiPicker
             onEmojiClick={(data) => handleEmojiSelect(data.emoji)}
