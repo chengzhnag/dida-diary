@@ -2,6 +2,19 @@
 
 一款专为移动端设计的精美个人日记与笔记应用，采用治愈系纸张质感设计，支持 Markdown 写作、双重密码保护与数据安全备份。
 
+## 📸 项目预览
+
+### 界面预览
+![项目预览图](https://img.952737.xyz/file/1776829856432_Stitch_20260422_115002.png)
+
+### 在线体验
+你可以直接访问演示站点进行体验：
+👉 [点击访问在线演示](https://d.952737.xyz/)
+- **登录密码**: `admin`
+- **时光锁查看密码**: `1234`
+
+---
+
 ## 🌟 核心特性
 
 - **极致移动体验**：响应式布局，适配刘海屏，大号触控热区，流畅动画。
@@ -31,36 +44,71 @@
 
 ## 🚀 部署指南
 
-### 1. 安装依赖
+### 方式一：本地代码部署
 
-```bash
-bun install
-```
+如果你希望在本地环境运行或调试代码，请按照以下步骤操作：
 
-### 2. 初始化数据库
+1.  **安装依赖**
+    ```bash
+    bun install
+    ```
 
-**方式一：使用命令行**
+2.  **初始化数据库**
+    - **命令行方式**：
+      ```bash
+      wrangler d1 execute DB --file=schema.sql
+      ```
+    - **手动方式**：在 Cloudflare Dashboard 中进入 D1 数据库管理界面，创建新表 `diaries`，并手动执行 `schema.sql` 中的建表语句和索引语句。
 
-```bash
-wrangler d1 execute DB --file=schema.sql
-```
+3.  **启动本地开发**
+    ```bash
+    bun dev
+    ```
 
-**方式二：手动初始化**
+4.  **线上部署**
+    ```bash
+    bun run deploy
+    ```
 
-- 在 Cloudflare Dashboard 中进入 D1 数据库管理界面。
-- 创建新表 `diaries`，并手动执行 `schema.sql` 中的建表语句和索引语句。
+### 方式二：Fork 项目 Cloudflare 部署
 
-### 3. 本地开发
+如果你想快速部署到自己的 Cloudflare 账号，推荐使用 Fork 方式：
 
-```bash
-bun dev
-```
+1.  **Star 和 Fork 项目**
+    - 访问项目仓库：[滴答日记](https://github.com/chengzhnag/dida-diary)
+    - 点击右上角的 `Star` ⭐️ ⭐️ 按钮，再点击 `Fork` 按钮将项目复制到你的 GitHub 账户。
 
-### 4. 线上部署
+2.  **登录 Cloudflare**
+    - 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/)，登录你的账户。
 
-```bash
-bun run deploy
-```
+3.  **创建 D1 数据库并初始化表**
+    - 在左侧导航栏选择 **存储和数据库** > **D1 SQL 数据库**。
+    - 点击 **创建数据库**，按提示创建数据库实例。
+    - 记录数据库的 **名称**（例如：`DIDA_DB`）。
+    - 初始化表：
+      - **控制台**（在 D1 数据库管理界面手动执行 `schema.sql` 中的建表语句）。
+
+4.  **创建 Workers 应用**
+    - 在左侧导航栏选择 **计算** > **Workers 和 Pages**。
+    - 点击 **创建应用程序**，选择 **with GitHub**。
+
+5.  **选择仓库**
+    - 选择 **GitHub**，登录并授权。
+    - 从列表中找到并选择你的 Fork 仓库（例如：`<你的用户名>/dida-diary`）。
+    - 确认 **Branch** 为 `master`（或你的主分支）。
+
+6.  **设置环境变量**
+    - 在部署页面的 **Environment Variables** 部分，添加以下变量：
+      ```bash
+      ADMIN_PASS: 自定义管理密码
+      DIARY_PASS: 自定义时光锁密码
+      JWT_SECRET: 自定义密钥（务必复杂）
+      DB: <你的数据库绑定名称>  # 例如：DIDA_DB
+      ```
+
+7.  **保存并部署**
+    - 点击 **Save and Deploy**，等待部署完成。
+    - 部署成功后，点击 **Visit site** 访问你的在线应用。
 
 ---
 

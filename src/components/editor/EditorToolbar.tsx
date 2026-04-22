@@ -113,8 +113,8 @@ export function EditorToolbar({
             variant="ghost"
             size="icon"
             onClick={(e) => {
-              e.preventDefault();
-              onKeepTextareaFocus?.();
+              // e.preventDefault();
+              // onKeepTextareaFocus?.();
               setIsEmojiOpen(!isEmojiOpen);
             }}
             className="text-zinc-500 hover:text-orange-500 active:scale-90 transition-transform"
