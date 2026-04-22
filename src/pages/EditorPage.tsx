@@ -43,6 +43,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const [newCategory, setNewCategory] = useState('');
   const [isCategoryError, setIsCategoryError] = useState(false);
   const [checkMdDialogVisible, setCheckMdDialogVisible] = useState(false);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const isCheckMdDialogOnce = useRef<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedIdRef = useRef<string | null>(null);
@@ -94,6 +95,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   }, [content, isMarkdown]);
 
   const handleSave = async () => {
+    setIsEmojiOpen(false);
     setLoading(true);
     // Auto-include pending category
     let finalCategories = [...categories];
@@ -146,6 +148,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   };
 
   const handleGoToList = () => {
+    setIsEmojiOpen(false);
     if (isListUnlocked) {
       navigate('/diaries');
     } else {
@@ -164,6 +167,11 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       textareaRef.current?.setSelectionRange(newPos, newPos);
     }, 0);
   };
+
+  const onKeepTextareaFocus = () => {
+    if (!textareaRef.current) return;
+    textareaRef.current.focus();
+  }
 
   const addCategory = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newCategory.trim()) {
@@ -200,6 +208,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               variant="ghost"
               size="icon"
               onClick={() => {
+                setIsEmojiOpen(false);
                 initializedIdRef.current = null;
                 navigate('/editor');
               }}
@@ -242,7 +251,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsPreview(!isPreview)}
+              onClick={() => { setIsPreview(!isPreview); setIsEmojiOpen(false); }}
               className={cn("rounded-full h-9 w-9 transition-all", isPreview ? "text-orange-500 bg-orange-50" : "text-zinc-500")}
             >
               {isPreview ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -277,6 +286,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
+              onFocus={() => setIsEmojiOpen(false)}
               className="text-[14px] font-bold text-zinc-700 bg-transparent border-none p-0 focus:ring-0 cursor-pointer w-[110px] appearance-none outline-none"
             />
           </div>
@@ -292,7 +302,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               {categories.map(cat => (
                 <Badge key={cat} className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-[9px] px-1.5 py-0 flex items-center gap-1 shrink-0">
                   {cat}
-                  <span onClick={() => setCategories(categories.filter(c => c !== cat))} className="cursor-pointer hover:text-red-500 leading-none">×</span>
+                  <span onClick={() => { setCategories(categories.filter(c => c !== cat)); setIsEmojiOpen(false); }} className="cursor-pointer hover:text-red-500 leading-none">×</span>
                 </Badge>
               ))}
               <input
@@ -301,6 +311,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
                 value={newCategory}
                 onChange={e => setNewCategory(e.target.value)}
                 onKeyDown={addCategory}
+                onFocus={() => setIsEmojiOpen(false)}
                 className="flex-1 text-[14px] bg-transparent border-none p-0 focus:ring-0 placeholder:text-zinc-300 min-w-[60px] outline-none"
               />
             </div>
@@ -313,6 +324,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
             placeholder="给这段记忆起个名字..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onFocus={() => setIsEmojiOpen(false)}
             className="w-full text-2xl font-bold bg-transparent border-none focus:ring-0 placeholder:text-zinc-200 text-zinc-900 leading-tight outline-none"
           />
         </div>
@@ -330,6 +342,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               placeholder="这一刻，有什么想留下的吗..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onFocus={() => setIsEmojiOpen(false)}
               className="w-full h-full p-6 text-zinc-700 bg-transparent border-none focus:ring-0 resize-none leading-relaxed text-lg placeholder:text-zinc-200 outline-none"
             />
           )}
@@ -337,6 +350,8 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
       </main>
       {!isPreview && (
         <EditorToolbar
+          isEmojiOpen={isEmojiOpen}
+          setIsEmojiOpen={setIsEmojiOpen}
           onInsertEmoji={insertTextAtCursor}
           onInsertText={insertTextAtCursor}
           tags={tags}
@@ -344,6 +359,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           onRemoveTag={(tag) => setTags(tags.filter(t => t !== tag))}
           isMarkdown={isMarkdown}
           setIsMarkdown={setIsMarkdown}
+          onKeepTextareaFocus={onKeepTextareaFocus}
         />
       )}
 

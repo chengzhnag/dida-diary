@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface EditorToolbarProps {
+  isEmojiOpen: boolean;
+  setIsEmojiOpen: (val: boolean) => void;
   onInsertEmoji: (emoji: string) => void;
   onInsertText: (text: string) => void;
   tags: string[];
@@ -15,19 +17,22 @@ interface EditorToolbarProps {
   onRemoveTag: (tag: string) => void;
   isMarkdown: boolean;
   setIsMarkdown: (val: boolean) => void;
+  onKeepTextareaFocus: () => void
 }
 
 export function EditorToolbar({
+  isEmojiOpen,
+  setIsEmojiOpen,
   onInsertEmoji,
   onInsertText,
   tags,
   onAddTag,
   onRemoveTag,
   isMarkdown,
-  setIsMarkdown
+  setIsMarkdown,
+  onKeepTextareaFocus,
 }: EditorToolbarProps) {
   const [newTag, setNewTag] = useState('');
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,29 +47,39 @@ export function EditorToolbar({
     setIsEmojiOpen(false);
   };
 
+  const handleActions = (e, type: 'bold' | 'italic' | 'list' | 'task') => {
+    const emnumMap = {
+      bold: '****',
+      italic: '**',
+      list: '\n- ',
+      task: '\n- [ ] ',
+    }
+    e.preventDefault();
+    onKeepTextareaFocus?.();
+    setIsEmojiOpen(false);
+    onInsertText(emnumMap[type]);
+
+  }
+
   const tools = [
     {
-      icon: <Bold size={18} />, action: () => {
-        setIsEmojiOpen(false);
-        onInsertText('****');
+      icon: <Bold size={18} />, action: (e) => {
+        handleActions(e, 'bold')
       }, label: '加粗'
     },
     {
-      icon: <Italic size={18} />, action: () => {
-        setIsEmojiOpen(false);
-        onInsertText('**');
+      icon: <Italic size={18} />, action: (e) => {
+        handleActions(e, 'italic')
       }, label: '斜体'
     },
     {
-      icon: <List size={18} />, action: () => {
-        setIsEmojiOpen(false);
-        onInsertText('\n- ');
+      icon: <List size={18} />, action: (e) => {
+        handleActions(e, 'list')
       }, label: '列表'
     },
     {
-      icon: <CheckSquare size={18} />, action: () => {
-        setIsEmojiOpen(false);
-        onInsertText('\n- [ ] ');
+      icon: <CheckSquare size={18} />, action: (e) => {
+        handleActions(e, 'task')
       }, label: '任务'
     },
   ];
@@ -86,6 +101,7 @@ export function EditorToolbar({
             placeholder="+ 标签"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
+            onFocus={() => setIsEmojiOpen(false)}
             className="w-full border-none shadow-none focus:ring-orange-500 placeholder:text-orange-300"
           />
         </form>
@@ -96,7 +112,11 @@ export function EditorToolbar({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsEmojiOpen(!isEmojiOpen)}
+            onClick={(e) => {
+              e.preventDefault();
+              onKeepTextareaFocus?.();
+              setIsEmojiOpen(!isEmojiOpen);
+            }}
             className="text-zinc-500 hover:text-orange-500 active:scale-90 transition-transform"
           >
             <Smile size={22} />
@@ -107,7 +127,9 @@ export function EditorToolbar({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              onKeepTextareaFocus?.();
               setIsEmojiOpen(false);
               setIsMarkdown(!isMarkdown);
             }}
@@ -139,27 +161,24 @@ export function EditorToolbar({
         </div>
       </div>
 
-      {/* 直接渲染的 EmojiPicker */}
-      {isEmojiOpen && (
-        <div className="border-t border-orange-100 bg-white/80 backdrop-blur-md">
-          <div className="p-0 overflow-hidden">
-            <EmojiPicker
-              onEmojiClick={(data) => handleEmojiSelect(data.emoji)}
-              width="100%"
-              height="100%"
-              skinTonesDisabled
-              autoFocusSearch={false}
-              lazyLoadEmojis
-              searchDisabled
-              previewConfig={{ showPreview: false }}
-              searchPlaceHolder="搜索表情..."
-              theme={Theme.LIGHT}
-              style={{ background: '#FFF7ED', maxHeight: '300px' }}
-              emojiData={zh}
-            />
-          </div>
+      <div className={cn('border-t border-orange-100 bg-white/80 backdrop-blur-md transition-all duration-300', isEmojiOpen ? 'h-[300px]' : 'h-0')}>
+        <div className="p-0 overflow-hidden">
+          <EmojiPicker
+            onEmojiClick={(data) => handleEmojiSelect(data.emoji)}
+            width="100%"
+            height="100%"
+            skinTonesDisabled
+            autoFocusSearch={false}
+            lazyLoadEmojis
+            searchDisabled
+            previewConfig={{ showPreview: false }}
+            searchPlaceHolder="搜索表情..."
+            theme={Theme.LIGHT}
+            style={{ background: '#FFF7ED', maxHeight: '300px' }}
+            emojiData={zh}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
