@@ -125,6 +125,7 @@
 | 步骤 9 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.3d5e41shbx.webp) |
 | 步骤 10 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.8l0or1m8bp.webp) |
 | 步骤 11 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.szjreu5d5.webp) |
+| 步骤 12 | [点击查看图片](https://cdn.jsdelivr.net/gh/Zgrowth/image@master/document/image.86u91ksr3r.webp) |
 
 ---
 
