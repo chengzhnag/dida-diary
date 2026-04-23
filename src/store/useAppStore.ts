@@ -23,7 +23,7 @@ interface AppState {
   importDiaries: (items: any[]) => Promise<void>;
   setSearchQuery: (query: object) => void;
 }
-const API_BASE = 'https://d.952737.xyz/api';
+const API_BASE = '';
 const PAGE_SIZE = 10;
 export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: !!localStorage.getItem('whisper_token'),
