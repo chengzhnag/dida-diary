@@ -98,7 +98,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const nextPage = isAppend ? get().currentPage + 1 : 1;
     set({ isLoading: true });
     try {
-      const url = new URL(`${API_BASE}/diaries`);
+      const url = new URL(`${window.location.origin}${API_BASE}/diaries`);
       if (params?.q) url.searchParams.append('q', params.q);
       if (params?.startDate) url.searchParams.append('startDate', params.startDate);
       if (params?.endDate) url.searchParams.append('endDate', params.endDate);
