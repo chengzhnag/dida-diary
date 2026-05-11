@@ -3,6 +3,7 @@ import type { Context } from "hono";
 
 export interface Env {
   DB: D1Database;
+  AI?: any; // Cloudflare AI binding
   ADMIN_PASS?: string;
   DIARY_PASS?: string;
   JWT_SECRET?: string;

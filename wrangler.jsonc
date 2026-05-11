@@ -13,6 +13,9 @@
   "observability": {
     "enabled": true
   },
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "ADMIN_PASS": "admin",
     "DIARY_PASS": "1234",

@@ -2,10 +2,50 @@ import { Hono } from "hono";
 import { type DiaryRow, mapRowToEntry } from "./entities";
 import { ok, bad, notFound } from './core-utils';
 import { SignJWT, jwtVerify } from 'jose';
-import type { DiaryEntry } from "@shared/types";
+import type { DiaryEntry, PolishRequest, PolishResponse, PolishStylePreset } from "@shared/types";
 import type { Env } from "./core-utils";
 
 const getJwtSecret = (env: Env) => new TextEncoder().encode(env.JWT_SECRET);
+
+// 预设的润色风格配置
+const POLISH_STYLE_PRESETS: PolishStylePreset[] = [
+  {
+    id: 'concise',
+    name: '简洁有力',
+    description: '删除冗余表述，保留核心信息，语言精炼',
+    systemPrompt: '你是一位精妙的文字编辑。请用简洁有力的语言重写输入的内容，删除冗余表述，保留核心意思。仅输出重写后的内容，不要包含任何解释或前缀。'
+  },
+  {
+    id: 'poetic',
+    name: '诗意优美',
+    description: '富有意象和比喻，提升文字的美感和意境',
+    systemPrompt: '你是一位天才的诗人。请用优美、富有诗意的语言重写输入的内容，加入恰当的比喻和联想，提升文字的意象美和意境。仅输出重写后的内容，不要包含任何解释或前缀。'
+  },
+  {
+    id: 'professional',
+    name: '专业正式',
+    description: '适合正式文档，避免口语或感叹，措辞严谨',
+    systemPrompt: '你是一位专业的商务文案撰写员。请用专业正式的语言重写输入的内容，避免口语和感叹，措辞严谨得体。仅输出重写后的内容，不要包含任何解释或前缀。'
+  },
+  {
+    id: 'casual',
+    name: '轻松自然',
+    description: '口语化表达，就像和朋友聊天，增强亲近感',
+    systemPrompt: '你是一位亲切友善的聊天伙伴。请用轻松自然的口语改写输入的内容，就像和朋友聊天一样，增强亲近感和真挚感。仅输出重写后的内容，不要包含任何解释或前缀。'
+  },
+  {
+    id: 'sentimental',
+    name: '温暖感性',
+    description: '强调情感和回忆，突出内心感受，温情脉脉',
+    systemPrompt: '你是一位感悟生活的文艺青年。请强调情感和回忆，用温暖感人的语言重写输入的内容，突出内心感受和情感温度。仅输出重写后的内容，不要包含任何解释或前缀。'
+  },
+  {
+    id: 'humorous',
+    name: '幽默趣味',
+    description: '添加幽默和趣味元素，让表述有趣生动',
+    systemPrompt: '你是一位风趣幽默的故事讲述者。请添加适当的幽默和趣味元素，让输入的内容更有趣生动，但要保持原意。仅输出重写后的内容，不要包含任何解释或前缀。'
+  }
+];
 
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // Global Middleware to check D1 Database Binding
@@ -217,6 +257,95 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     } catch (e) {
       console.error('Import Error:', e);
       return bad(c, '导入失败: ' + (e instanceof Error ? e.message : '数据格式错误'));
+    }
+  });
+
+  // AI Polish API
+  const getPolishStyleById = (styleId: string): PolishStylePreset | undefined => {
+    return POLISH_STYLE_PRESETS.find(s => s.id === styleId);
+  };
+
+  // Get available polish styles
+  app.get('/api/polish-styles', async (c) => {
+    const styles = POLISH_STYLE_PRESETS.map(({ id, name, description }) => ({
+      id,
+      name,
+      description
+    }));
+    return ok(c, styles);
+  });
+
+  // Post request for polish
+  app.post('/api/polish', async (c) => {
+    try {
+      if (!c.env.AI) {
+        return bad(c, 'AI服务未配置');
+      }
+
+      const req = await c.req.json<PolishRequest>();
+      const { content, styleId, customSystemPrompt } = req;
+
+      if (!content) {
+        return bad(c, '缺少必要参数：content');
+      }
+
+      if (content.length > 5000) {
+        return bad(c, '内容过长，请限制在5000字以内');
+      }
+
+      let systemPrompt = '';
+      let styleName = '';
+
+      // 优先使用自定义系统提示词，其次使用预设风格，都没有则报错
+      if (customSystemPrompt) {
+        systemPrompt = customSystemPrompt;
+        styleName = '自定义风格';
+      } else if (styleId) {
+        const preset = getPolishStyleById(styleId);
+        if (!preset) {
+          return bad(c, `无效的风格ID: ${styleId}`);
+        }
+        systemPrompt = preset.systemPrompt;
+        styleName = preset.name;
+      } else {
+        return bad(c, '必须提供 styleId 或 customSystemPrompt');
+      }
+
+      // 构建用户消息
+      const userContent = `请润色以下内容：\n\n${content}`;
+
+      const response = await c.env.AI.run('@cf/moonshotai/kimi-k2.6', {
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: userContent
+          }
+        ]
+      } as any);
+
+      const polished = (response as any)?.result?.content?.trim() || '';
+
+      if (!polished) {
+        return bad(c, 'AI润色失败，请重试');
+      }
+
+      const result: PolishResponse = {
+        original: content,
+        polished,
+        styleId: styleId,
+        styleName,
+        wordCountBefore: content.length,
+        wordCountAfter: polished.length,
+      };
+
+      return ok(c, result);
+    } catch (e) {
+      console.error('Polish Error:', e);
+      return bad(c, `润色失败: ${e instanceof Error ? e.message : '未知错误'}`);
     }
   });
 }

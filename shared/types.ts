@@ -26,3 +26,25 @@ export interface AuthResponse {
   token?: string;
   error?: string;
 }
+
+export interface PolishStylePreset {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string; // 系统提示词
+}
+
+export interface PolishRequest {
+  content: string;
+  styleId?: string; // 预设风格ID（可选）
+  customSystemPrompt?: string; // 自定义系统提示词（可选）
+}
+
+export interface PolishResponse {
+  original: string;
+  polished: string;
+  styleId?: string;
+  styleName?: string;
+  wordCountBefore: number;
+  wordCountAfter: number;
+}

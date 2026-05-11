@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Check, Eye, EyeOff, LayoutGrid, Trash2, History, Plus, Loader2 } from 'lucide-react';
+import { ChevronLeft, Check, Eye, EyeOff, LayoutGrid, Trash2, History, Plus, Loader2, Sparkles } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@/components/ui/button';
 import { MarkdownPreview } from '@/components/editor/MarkdownPreview';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { PolishDrawer } from '@/components/editor/PolishDrawer';
 import { cn, checkIsMarkdown } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
   const [isCategoryError, setIsCategoryError] = useState(false);
   const [checkMdDialogVisible, setCheckMdDialogVisible] = useState(false);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isPolishOpen, setIsPolishOpen] = useState(false);
   const isCheckMdDialogOnce = useRef<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedIdRef = useRef<string | null>(null);
@@ -187,6 +189,10 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
     }
   };
 
+  const handleApplyPolish = (polished: string) => {
+    setContent(polished);
+  };
+
   return (
     <div className="flex flex-col h-[100dvh] bg-[#FFF7ED]">
       <header className="flex items-center justify-between px-4 py-3 bg-[#FFF7ED]/80 backdrop-blur-md border-b border-orange-100 z-10 shrink-0">
@@ -216,6 +222,20 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
               title="新建记录"
             >
               <Plus size={18} />
+            </Button>
+          )}
+          {content.trim() && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setIsEmojiOpen(false);
+                setIsPolishOpen(true);
+              }}
+              className="rounded-full hover:text-orange-500 h-9 w-9 transition-colors"
+              title="AI润色"
+            >
+              <Sparkles size={18} />
             </Button>
           )}
           <Button
@@ -390,6 +410,13 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PolishDrawer
+        open={isPolishOpen}
+        onOpenChange={setIsPolishOpen}
+        content={content}
+        onApplyPolish={handleApplyPolish}
+      />
     </div>
   );
 }
