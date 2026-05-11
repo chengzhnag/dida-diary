@@ -324,13 +324,19 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
             role: 'user',
             content: userContent
           }
-        ]
+        ],
+        max_tokens: 12048,
       } as any);
 
-      const polished = (response as any)?.result?.content?.trim() || '';
+      const polished = (
+        (response as any)?.choices?.[0]?.message?.content ||
+        (response as any)?.result?.content ||
+        ''
+      )?.trim() || '';
 
       if (!polished) {
-        return bad(c, 'AI润色失败，请重试');
+        console.error('AI Response:', response);
+        return bad(c, `AI润色失败，没有取到结果。Response: ${JSON.stringify(response)}`);
       }
 
       const result: PolishResponse = {
