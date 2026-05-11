@@ -209,7 +209,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          {id && (
+          {/* {id && (
             <Button
               variant="ghost"
               size="icon"
@@ -223,7 +223,7 @@ export default function EditorPage({ isFirst }: { isFirst?: boolean }) {
             >
               <Plus size={18} />
             </Button>
-          )}
+          )} */}
           {content.trim() && (
             <Button
               variant="ghost"

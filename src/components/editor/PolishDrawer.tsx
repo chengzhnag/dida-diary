@@ -24,15 +24,15 @@ type PolishMode = 'preset' | 'custom';
 const CUSTOM_PROMPT_EXAMPLES = [
   {
     title: '古文言风格',
-    prompt: '你是一位古代文人。请用古文言的方式重写输入的内容，使用典雅的文言词汇和句式。仅输出重写后的内容，不要包含任何解释。'
+    prompt: '你是一位古代文人。请用古文言的方式重写输入的内容，使用典雅的文言词汇和句式。根据语义适当添加换行符。仅输出重写后的内容，不要包含任何解释。'
   },
   {
     title: '科技术语风格',
-    prompt: '你是一位技术博客作者。请用专业的科技术语和现代表达重写输入的内容。仅输出重写后的内容，不要包含任何解释。'
+    prompt: '你是一位技术博客作者。请用专业的科技术语和现代表达重写输入的内容。根据语义适当添加换行符。仅输出重写后的内容，不要包含任何解释。'
   },
   {
     title: '儿童故事风格',
-    prompt: '你是一位儿童文学作家。请用简单有趣的语言重写输入的内容，让小朋友容易理解。仅输出重写后的内容，不要包含任何解释。'
+    prompt: '你是一位儿童文学作家。请用简单有趣的语言重写输入的内容，让小朋友容易理解。根据语义适当添加换行符。仅输出重写后的内容，不要包含任何解释。'
   },
 ];
 
@@ -328,7 +328,7 @@ export function PolishDrawer({ open, onOpenChange, content, onApplyPolish }: Pol
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-zinc-900 mb-2">原文</h3>
-                <div className="bg-gray-50 rounded-2xl p-3 text-sm text-zinc-700 leading-relaxed max-h-32 overflow-y-auto">
+                <div className="bg-gray-50 rounded-2xl p-3 text-sm text-zinc-700 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">
                   {polishResult.original}
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function PolishDrawer({ open, onOpenChange, content, onApplyPolish }: Pol
                 <h3 className="text-sm font-bold text-zinc-900 mb-2">
                   润色结果 ({polishResult.styleName})
                 </h3>
-                <div className="bg-orange-50 rounded-2xl p-3 text-sm text-zinc-700 leading-relaxed max-h-32 overflow-y-auto border border-orange-200">
+                <div className="bg-orange-50 rounded-2xl p-3 text-sm text-zinc-700 leading-relaxed max-h-32 overflow-y-auto border border-orange-200 whitespace-pre-wrap">
                   {polishResult.polished}
                 </div>
               </div>
