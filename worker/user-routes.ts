@@ -93,6 +93,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
   });
 
+  app.get('/api/auth/validate', async (c) => {
+    return ok(c, true);
+  });
+
   app.get('/api/diaries', async (c) => {
     const q = c.req.query('q')?.toLowerCase();
     const startDate = c.req.query('startDate');

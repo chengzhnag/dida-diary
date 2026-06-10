@@ -11,8 +11,10 @@ interface AppState {
   hasMore: boolean;
   searchQuery: object;
   token: string | null;
+  tokenValidated: boolean;
   login: (password: string) => Promise<boolean>;
   logout: () => void;
+  validateToken: () => Promise<boolean>;
   unlockList: (password: string) => Promise<boolean>;
   fetchDiaries: (params?: { q?: string; startDate?: string; endDate?: string; append?: boolean }) => Promise<void>;
   fetchDiary: (id: string) => Promise<DiaryEntry | null>;
@@ -35,6 +37,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   hasMore: false,
   searchQuery: {},
   token: localStorage.getItem('whisper_token'),
+  tokenValidated: false,
   login: async (password: string) => {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
@@ -45,7 +48,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const json = await res.json() as ApiResponse<{ token: string }>;
       if (json.success && json.data?.token) {
         localStorage.setItem('whisper_token', json.data.token);
-        set({ isAuthenticated: true, token: json.data.token, isListUnlocked: false });
+        set({ isAuthenticated: true, token: json.data.token, isListUnlocked: false, tokenValidated: true });
         return true;
       }
       return false;
@@ -54,11 +57,35 @@ export const useAppStore = create<AppState>((set, get) => ({
       return false;
     }
   },
+  validateToken: async () => {
+    const token = get().token;
+    if (!token) return false;
+    if (get().tokenValidated) return true;
+    try {
+      const res = await fetch(`${API_BASE}/auth/validate`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.status === 401) {
+        get().logout();
+        return false;
+      }
+      const valid = res.ok;
+      if (valid) set({ tokenValidated: true });
+      return valid;
+    } catch (e) {
+      console.error('[AUTH] Validate token error', e);
+      return false;
+    }
+  },
   logout: () => {
     localStorage.removeItem('whisper_token');
     set({
       isAuthenticated: false,
       token: null,
+      tokenValidated: false,
       diaries: [],
       totalCount: 0,
       currentPage: 1,
