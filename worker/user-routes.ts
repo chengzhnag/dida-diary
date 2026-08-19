@@ -318,7 +318,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       // 构建用户消息
       const userContent = `请润色以下内容：\n\n${content}`;
 
-      const response = await c.env.AI.run('@cf/moonshotai/kimi-k2.6', {
+      const response = await c.env.AI.run('@cf/qwen/qwen3-30b-a3b-fp8', {
         messages: [
           {
             role: 'system',
